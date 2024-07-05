@@ -1,0 +1,57 @@
+services:
+  db:
+    image: mysql:8.0-debian
+    ports:
+      - "13301:3309"
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    platform: linux/amd64
+  api:
+    container_name: oss_api
+    build: .
+    command: /bin/bash -c 'rm -rf tmp/pids/server.pid; bundle exec rails s -b 0.0.0.0'
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/myapp
+      - public-data:/myapp/public
+      - tmp-data:/myapp/tmp
+      - log-data:/myapp/log
+    ports:
+      - "4002:3000"
+    links:
+      - mailhog
+    depends_on:
+      - db
+  sidekiq:
+    container_name: oss_sidekiq
+    build: .
+    command: bundle exec sidekiq
+    ports:
+      - 3007:3001
+    links:
+    - redis
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/myapp
+  redis:
+    container_name: oss_redis
+    image: redis
+    ports:
+      - "6330:6379"
+  mailhog:
+    container_name: oss_mailhog
+    image: mailhog/mailhog
+    ports:
+      - 8010:8025
+volumes:
+  db_data:
+  public-data:
+  tmp-data:
+  log-data:
