@@ -8,6 +8,9 @@ on:
 jobs:
   send_email:
     runs-on: ubuntu-latest
+    env:
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      TZ: Japan
     services:
       mysql:
         image: mysql:8.0-debian
@@ -18,6 +21,11 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h mysql"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,12 +42,6 @@ jobs:
         run: |
           bin/rails db:create
           bin/rails db:schema:load
-
-      - name: Set up credentials
-        run: |
-          mkdir -p config
-          echo "${{ secrets.RAILS_MASTER_KEY }}" > config/master.key
-          echo "${{ secrets.RAILS_CREDENTIALS }}" > config/credentials/development.key
       - name: Send Notification
         env:
           RAILS_ENV: development
