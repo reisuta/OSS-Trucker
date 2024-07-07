@@ -9,7 +9,9 @@ jobs:
   send_email:
     runs-on: ubuntu-latest
     env:
+      RAILS_ENV: development
       RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      RAILS_DEVELOPMENT_KEY: ${{ secrets.RAILS_DEVELOPMENT_KEY }}
       TZ: Japan
     services:
       mysql:
@@ -43,7 +45,5 @@ jobs:
           bin/rails db:create
           bin/rails db:schema:load
       - name: Send Notification
-        env:
-          RAILS_ENV: development
         run: |
           bin/rails runner "EmailsController.new.send_notification"
