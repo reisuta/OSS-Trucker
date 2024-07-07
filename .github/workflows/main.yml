@@ -40,6 +40,9 @@ jobs:
         run: |
           gem install bundler
           bundle install
+      - name: Set up credentials
+        run: |
+          echo "${{ secrets.RAILS_DEVELOPMENT_KEY }}" > config/credentials/development.key
       - name: Set up database
         run: |
           bin/rails db:create
