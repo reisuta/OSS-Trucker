@@ -2,16 +2,13 @@ name: Send Today's PR and Issues
 
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 22 * * *'
   workflow_dispatch:
-
 jobs:
   send_email:
     runs-on: ubuntu-latest
     env:
       RAILS_ENV: test
-      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-      RAILS_TEST_KEY: ${{ secrets.RAILS_TEST_KEY }}
       TZ: Japan
     services:
       mysql:
@@ -24,14 +21,13 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h mysql"
+          --health-cmd "mysqladmin ping -h localhost || exit 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -40,15 +36,18 @@ jobs:
         run: |
           gem install bundler
           bundle install
+      - name: Set up credentials
+        run: |
+          mkdir -p config/credentials
+          echo "${{ secrets.RAILS_MASTER_KEY }}" > config/master.key
+          echo "${{ secrets.RAILS_TEST_KEY }}" > config/credentials/test.key
       - name: Set up database
         run: |
-          bin/rails db:create
-          bin/rails db:schema:load
-        env:
-          RAILS_ENV: test
-          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          RAILS_TEST_KEY: ${{ secrets.RAILS_TEST_KEY }}
-          TZ: Japan
+          cp config/database.yml.ci config/database.yml
+          bin/rails db:create RAILS_ENV=test
+          bin/rails db:migrate RAILS_ENV=test
       - name: Send Notification
         run: |
           bin/rails runner "EmailsController.new.send_notification"
+        env:
+          RAILS_ENV: test
