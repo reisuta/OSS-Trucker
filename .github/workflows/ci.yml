@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '0 22 * * *'
   workflow_dispatch:
+  push:
 jobs:
   send_email:
     runs-on: ubuntu-latest
