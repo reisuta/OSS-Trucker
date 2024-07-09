@@ -1,6 +1,9 @@
 require 'google/apis/sheets_v4'
 
 class Google::Sheet
+  extend Forwardable
+  def_delegators :@service, :update_spreadsheet_value
+
   def initialize
     @service = Google::Apis::SheetsV4::SheetsService.new
     @service.authorization = authorize
