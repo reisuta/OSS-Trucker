@@ -14,6 +14,8 @@ class EmailsController < ApplicationController
     url_array = []
     url_array = urls.sample(3) if urls.any?
 
+    sheet = Google::Sheet.new
+    val = sheet.get_values(Rails.application.credentials.dig(:google, :sheet_id), ['URL一覧!A2:E']).values
     OssMailer.with(url: url_array).notification.deliver_now
   end
 end
